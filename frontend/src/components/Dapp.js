@@ -74,8 +74,8 @@ export class Dapp extends React.Component {
     // clicks a button. This callback just calls the _connectWallet method.
     if (!this.state.selectedAddress) {
       return (
-        <ConnectWallet
-          connectWallet={() => this._connectWallet()}
+        <ConnectWallet 
+          connectWallet={() => this._connectWallet()} 
           networkError={this.state.networkError}
           dismiss={() => this._dismissNetworkError()}
         />
@@ -137,7 +137,7 @@ export class Dapp extends React.Component {
             {/*
               If the user has no tokens, we don't show the Transfer form
             */}
-            {this.state.balance === 0 && (
+            {this.state.balance.eq(0) && (
               <NoTokensMessage selectedAddress={this.state.selectedAddress} />
             )}
 
@@ -147,7 +147,7 @@ export class Dapp extends React.Component {
               The component doesn't have logic, it just calls the transferTokens
               callback.
             */}
-            {this.state.balance > 0 && (
+            {this.state.balance.gt(0) && (
               <Transfer
                 transferTokens={(to, amount) =>
                   this._transferTokens(to, amount)
@@ -194,10 +194,10 @@ export class Dapp extends React.Component {
       if (newAddress === undefined) {
         return this._resetState();
       }
-
+      
       this._initialize(newAddress);
     });
-
+    
     // We reset the dapp state if the network is changed
     window.ethereum.on("chainChanged", ([networkId]) => {
       this._stopPollingData();
@@ -205,7 +205,7 @@ export class Dapp extends React.Component {
     });
   }
 
-  async _initialize(userAddress) {
+  _initialize(userAddress) {
     // This method initializes the dapp
 
     // We first store the user's address in the component's state
@@ -219,7 +219,7 @@ export class Dapp extends React.Component {
     // Fetching the token data and the user's balance are specific to this
     // sample project, but you can reuse the same initialization pattern.
     this._initializeEthers();
-    await this._getTokenData();
+    this._getTokenData();
     this._startPollingData();
   }
 
@@ -267,12 +267,10 @@ export class Dapp extends React.Component {
 
   async _updateBalance() {
     let balance = await this._token.balanceOf(this.state.selectedAddress);
-    // console.log(this.state.tokenData);
-    balance = Number(balance) / (this.state.tokenData.decimals * 10);
-    // console.log(balance);
-    // balance = Number(balance) + 1;
+    const decimals = await this._token.decimals();
 
-    // balance=balance.toString();
+    balance = ethers.BigNumber.from(balance/(decimals*10));
+
     this.setState({ balance });
   }
 
@@ -367,7 +365,7 @@ export class Dapp extends React.Component {
       return true;
     }
 
-    this.setState({
+    this.setState({ 
       networkError: 'Please connect Metamask to Localhost:8545'
     });
 
